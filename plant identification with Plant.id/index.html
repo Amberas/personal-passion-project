@@ -21,7 +21,6 @@
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         const res = event.target.result;
-                        console.log(res);
                         resolve(res);
                     }
                     reader.readAsDataURL(file)
@@ -29,7 +28,7 @@
             })
 
             Promise.all(promises).then((base64files) => {
-                console.log(base64files)
+                console.log(base64files);
 
                 const data = {
                     api_key: "lFEfO77cVUZSlLuxNChfvcdgJwN5bNZhbwCxtrQQfFuHiOKZtP",
@@ -44,7 +43,9 @@
                         "synonyms"]
                 };
 
-                fetch('https://api.plant.id/v2/identify', {
+                console.log(data);
+
+               /* fetch('https://api.plant.id/v2/identify', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -57,7 +58,7 @@
                     })
                     .catch((error) => {
                         console.error('Error:', error);
-                    });
+                    });*/
             })
 
         };
