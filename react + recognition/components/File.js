@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Image, View, Platform } from 'react-native';
+import { Button, Image, View, Platform, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 
 export default function File() {
     const [image, setImage] = useState(null);
+    const [dataResponse, setData] = useState(null);
 
 
     useEffect(() => {
@@ -18,6 +19,7 @@ export default function File() {
         })();
     }, []);
 
+    
     const handleUploade = async() => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -29,6 +31,38 @@ export default function File() {
         if (!result.cancelled) {
             setImage(result.uri);
         }
+
+            const data = {
+                api_key: "lFEfO77cVUZSlLuxNChfvcdgJwN5bNZhbwCxtrQQfFuHiOKZtP",
+                images: [result.uri],
+                modifiers: ["crops_fast", "similar_images"],
+                plant_language: "en",
+                plant_details: ["common_names",
+                    "url",
+                    "name_authority",
+                    "wiki_description",
+                    "taxonomy",
+                    "synonyms"]
+            };
+
+            console.log(data);
+
+            fetch('https://api.plant.id/v2/identify', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify(data),
+             })
+                 .then(response => response.json())
+                 .then(data => {
+                     console.log('Success:', data);
+                     setData(data);
+                 })
+                 .catch((error) => {
+                     console.error('Error:', error);
+                 });
+
     }
 
 
@@ -36,6 +70,9 @@ export default function File() {
             <View>
                 <Button onPress={handleUploade} title="Upload image"/>
                 {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+                {dataResponse && <Text>Name: {dataResponse.suggestions[0].plant_name}</Text>}
+                {dataResponse && <Text>Probility: {dataResponse.suggestions[0].probability}</Text>}
+                
             </View>
     );
 };
