@@ -47,7 +47,7 @@ export default function File() {
 
             console.log(data);
 
-            fetch('https://api.plant.id/v2/identify', {
+           fetch('https://api.plant.id/v2/identify', {
                  method: 'POST',
                  headers: {
                      'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export default function File() {
                 <Button onPress={handleUploade} title="Upload image"/>
                 {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
                 {dataResponse && <Text>Name: {dataResponse.suggestions[0].plant_name}</Text>}
-                {dataResponse && <Text>Probility: {dataResponse.suggestions[0].probability}</Text>}
+                {dataResponse && <Text>Probability: {dataResponse.suggestions[0].probability}</Text>}
                 
             </View>
     );
