@@ -1,0 +1,32 @@
+{
+    "plants": {
+        "Howea forsteriana": {
+            "sun": "medium",
+            "water": "medium"
+        },
+        "Dracaena trifasciata": {
+            "sun": "high",
+            "water": "low"
+        },
+        "Dracaena reflexa": {
+            "sun": "medium",
+            "water": "low"
+        },
+        "Epipremnum aureum": {
+            "sun": "medium",
+            "water": "high"
+        },
+        "Strelitzia nicolai": {
+            "sun": "high",
+            "water": "medium"
+        },
+        "Goeppertia orbifolia": {
+            "sun": "low",
+            "water": "high"
+        },
+        "Echinocactus grusonii": {
+            "sun": "high",
+            "water": "low"
+        }
+    }
+}
