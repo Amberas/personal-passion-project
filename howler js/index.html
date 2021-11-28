@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="btn-container"></div>
+    <script src="https://unpkg.com/howler@2.2.3/dist/howler.js"></script>
+    <script>
+        const music = ['voice', 'bass']
+
+        const MakeButtons = (element) => {
+            const sound = new Howl({ src: [`sounds/${element}.mp3`] })
+            sound.play();
+            let btn = document.createElement("button");
+            btn.innerHTML = element
+            btn.class = "btn";
+            document.getElementById('btn-container').append(btn);
+            btn.addEventListener('click', () => sound.pause());
+        }
+
+
+        const sounds = music.map(element => MakeButtons(element));
+    </script>
+</body>
+
+</html>
