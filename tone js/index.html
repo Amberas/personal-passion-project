@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/tone"></script>
+    <script type="text/javascript" src="https://unpkg.com/@tonejs/ui@0.0.8/build/tonejs-ui.js"></script>
+</head>
+
+<body>
+    <tone-content>
+        <tone-play-toggle></tone-play-toggle>
+    </tone-content>
+
+    <script type="text/javascript">
+
+        const voice = new Tone.Player("music/voice.mp3").toDestination();
+        const bass = new Tone.Player("music/bass.mp3").toDestination();
+        voice.sync().start(0);
+        bass.sync().start(1);
+
+        document.querySelector("tone-play-toggle").addEventListener("play", (e) => {
+
+            const playing = e.detail;
+
+            if (playing) {
+                Tone.Transport.start();
+            } else {
+                Tone.Transport.pause();
+            }
+        });
+    </script>
+</body>
+
+</html>
