@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzicato</title>
+</head>
+
+<body>
+    <div class="slidecontainer">
+        <button class="play">Play/pause</button>
+        <label for="myRange">Change Volume</label>
+        <input type="range" min="0" max="10" value="10" class="slider" id="myRange">
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzicato/0.6.4/Pizzicato.js"></script>
+    <script>
+
+        const voice = new Pizzicato.Sound('sounds/voice.mp3');
+
+        const $slider = document.querySelector(".slider");
+        const $button = document.querySelector(".play");
+
+        const handleChange = (e) => {
+            voice.volume = e.currentTarget.value / 10;
+        }
+
+        const handleClick = () => {
+            voice.volume = 1;
+            if (voice.playing) {
+                voice.pause();
+            } else {
+                voice.play();
+            }
+        }
+
+        const init = () => {
+            $slider.addEventListener("change", e => handleChange(e))
+            $button.addEventListener("click", handleClick)
+        }
+        init();
+
+    </script>
+    </script>
+</body>
+
+</html>
