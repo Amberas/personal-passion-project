@@ -1,0 +1,24 @@
+{
+  "name": "application",
+  "version": "1.0.0",
+  "description": "How can we improve the connection between plant and plant owner, resulting in a better plant care?",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amberas/personal-passion-project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Amberas/personal-passion-project/issues"
+  },
+  "homepage": "https://github.com/Amberas/personal-passion-project#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "johnny-five": "^2.1.0",
+    "node-osc": "^6.1.11"
+  }
+}
