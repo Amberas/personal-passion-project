@@ -14,9 +14,10 @@
     <p id="down"></p>
     <p id="left"></p>
     <p id="right"></p>
-
-
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        let socket; // will be assigned a value later
+
         const connectButton = document.getElementById('connectButton');
         const disconnectButton = document.getElementById('disconnectButton');
         const upText = document.getElementById('up');
@@ -28,7 +29,7 @@
         const upCharUuid = '12345678-1234-5678-1234-56789abcdef1';
         const downCharUuid = '12345678-1234-5678-1234-56789abcdef2';
         const leftCharUuid = '12345678-1234-5678-1234-56789abcdef3';
-        const rightCharUuid = '12345678-1234-5678-1234-56789abcdef2';
+        const rightCharUuid = '12345678-1234-5678-1234-56789abcdef4';
 
         let device, receiveCharUp, receiveCharDown, receiveCharLeft, receiveCharRight;
 
@@ -73,12 +74,17 @@
                 (evt) => {
                     const value = evt.target.value.getInt16(0, true);
                     text.innerText = `Tilting ${type}: ${value}`;
+                    socket.emit(type, value);
                 });
             char.startNotifications();
         };
 
 
         const init = () => {
+            socket = io.connect('/');
+            socket.on('connect', () => {
+                console.log(`Connected: ${socket.id}`);
+            });
             connectButton.addEventListener("click", handleButtonClick);
             disconnectButton.addEventListener("click", handleButtonClickTwo);
         }
