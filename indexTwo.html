@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+    <button id="connectButton" type="button">Connect</button>
+    <button id="disconnectButton" type="button">Disconnect</button>
+    <p id="up">Waiting for connection...</p>
+    <p id="down"></p>
+    <p id="left"></p>
+    <p id="right"></p>
+
+
+    <script>
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+        const upText = document.getElementById('up');
+        const downText = document.getElementById('down');
+        const leftText = document.getElementById('left');
+        const rightText = document.getElementById('right');
+
+        const primaryServiceUuid = '12345678-1234-5678-1234-56789abcdef0';
+        const upCharUuid = '12345678-1234-5678-1234-56789abcdef1';
+        const downCharUuid = '12345678-1234-5678-1234-56789abcdef2';
+        const leftCharUuid = '12345678-1234-5678-1234-56789abcdef3';
+        const rightCharUuid = '12345678-1234-5678-1234-56789abcdef2';
+
+        let device, receiveCharUp, receiveCharDown, receiveCharLeft, receiveCharRight;
+
+
+        const handleButtonClick = async () => {
+            upText.innerText = `Connecting...`;
+            device = await navigator.bluetooth.requestDevice({
+                filters: [{
+                    services: [primaryServiceUuid]
+                }]
+            });
+            console.log("Found bluetooth device");
+            const server = await device.gatt.connect();
+            console.log("connected to gatt server")
+            const service = await server.getPrimaryService(primaryServiceUuid);
+            console.log("Found service");
+            receiveCharUp = await service.getCharacteristic(upCharUuid);
+            receiveCharDown = await service.getCharacteristic(downCharUuid);
+            receiveCharLeft = await service.getCharacteristic(leftCharUuid);
+            receiveCharRight = await service.getCharacteristic(rightCharUuid);
+            console.log("characteristics:", receiveCharUp, receiveCharDown, receiveCharLeft, receiveCharRight);
+            listen(upText, receiveCharUp, "up");
+            listen(downText, receiveCharDown, "down");
+            listen(leftText, receiveCharLeft, "left");
+            listen(rightText, receiveCharRight, "right");
+        }
+
+        const disconnect = () => {
+            device = null;
+            receiveCharUp = null;
+            console.log("disconnected")
+        }
+
+        const handleButtonClickTwo = async () => {
+            await device.gatt.disconnect();
+            disconnect();
+        }
+
+        const listen = (text, char, type) => {
+            text.innerText = `Tilt the device`;
+            char.addEventListener('characteristicvaluechanged',
+                (evt) => {
+                    const value = evt.target.value.getInt16(0, true);
+                    text.innerText = `Tilting ${type}: ${value}`;
+                });
+            char.startNotifications();
+        };
+
+
+        const init = () => {
+            connectButton.addEventListener("click", handleButtonClick);
+            disconnectButton.addEventListener("click", handleButtonClickTwo);
+        }
+        init();
+
+    </script>
+
+</body>
+
+</html>
