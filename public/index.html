@@ -4,48 +4,69 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-
-    <button id="connectButton" type="button">Connect</button>
-    <button id="disconnectButton" type="button">Disconnect</button>
-    <p id="up">Waiting for connection...</p>
-    <p id="down"></p>
-    <p id="left"></p>
-    <p id="right"></p>
+    <div>
+        <button id="connectButton" type="button">Connect Arduino Nano</button>
+        <button id="disconnectButton" type="button">Disconnect Arduino Nano</button>
+        <p id="up">Waiting for connection...</p>
+        <p id="down"></p>
+        <p id="left"></p>
+        <p id="right"></p>
+    </div>
+    <div id="firebeetleContainer" class="display_none">
+        <button id="connectButtonTwo" type="button">Connect Firebeetle</button>
+        <button id="disconnectButtonTwo" type="button">Disconnect Firebeetle</button>
+        <p id="upTwo">Waiting for connection...</p>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let socket; // will be assigned a value later
 
         const connectButton = document.getElementById('connectButton');
         const disconnectButton = document.getElementById('disconnectButton');
+
+
+        const connectButtonTwo = document.getElementById('connectButtonTwo');
+        const disconnectButtonTwo = document.getElementById('disconnectButtonTwo');
+
+        const containerFirebeetle = document.getElementById('firebeetleContainer');
+
         const upText = document.getElementById('up');
+        const upTextTwo = document.getElementById('upTwo');
+
         const downText = document.getElementById('down');
         const leftText = document.getElementById('left');
         const rightText = document.getElementById('right');
 
         const primaryServiceUuid = '12345678-1234-5678-1234-56789abcdef0';
+        const primaryServiceUuidTwo = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+
         const upCharUuid = '12345678-1234-5678-1234-56789abcdef1';
         const downCharUuid = '12345678-1234-5678-1234-56789abcdef2';
         const leftCharUuid = '12345678-1234-5678-1234-56789abcdef3';
         const rightCharUuid = '12345678-1234-5678-1234-56789abcdef4';
 
         let device, receiveCharUp, receiveCharDown, receiveCharLeft, receiveCharRight;
+        let deviceTwo
 
 
-        const handleButtonClick = async () => {
+        const handleButtonConnect = async () => {
             upText.innerText = `Connecting...`;
             device = await navigator.bluetooth.requestDevice({
                 filters: [{
                     services: [primaryServiceUuid]
                 }]
             });
-            console.log("Found bluetooth device");
+            upText.innerText = "Found bluetooth device";
             const server = await device.gatt.connect();
-            console.log("connected to gatt server")
+            upText.innerText = "connected to gatt server";
             const service = await server.getPrimaryService(primaryServiceUuid);
-            console.log("Found service");
+            upText.innerText = "Found service";
+            connectButton.innerText = "connected";
+            containerFirebeetle.className = "display";
             receiveCharUp = await service.getCharacteristic(upCharUuid);
             receiveCharDown = await service.getCharacteristic(downCharUuid);
             receiveCharLeft = await service.getCharacteristic(leftCharUuid);
@@ -59,13 +80,31 @@
 
         const disconnect = () => {
             device = null;
-            receiveCharUp = null;
-            console.log("disconnected")
+            console.log("disconnected Arduino Nano & firebeetle");
+            upText.innerHTML = "Waiting for connection...";
+            downText.innerHTML = "";
+            leftText.innerHTML = "";
+            rightText.innerHTML = "";
+            deviceTwo = null;
+            containerFirebeetle.className = "display_none";
+            upTextTwo.innerHTML = "";
         }
 
-        const handleButtonClickTwo = async () => {
-            await device.gatt.disconnect();
-            disconnect();
+        const disconnectTwo = () => {
+            console.log("disconnected firebeetle");
+            upTextTwo.innerHTML = "Waiting for connection...";
+            deviceTwo = null;
+        }
+
+        const handleButtonDisconnect = async (e) => {
+            if (e.currentTarget.innerText == "Disconnect Arduino Nano") {
+                await device.gatt.disconnect();
+                disconnect();
+            } else if (e.currentTarget.innerText == "Disconnect Firebeetle") {
+                await deviceTwo.gatt.disconnect();
+                disconnectTwo();
+            }
+
         }
 
         const listen = (text, char, type) => {
@@ -80,13 +119,31 @@
         };
 
 
+        const handleButtonConnectTwo = async () => {
+            upTextTwo.innerText = `Connecting...`;
+            deviceTwo = await navigator.bluetooth.requestDevice({
+                filters: [{
+                    services: [primaryServiceUuidTwo],
+                }]
+            });
+            upTextTwo.innerText = "Found bluetooth device";
+            const serverTwo = await deviceTwo.gatt.connect();
+            upTextTwo.innerText = "connected to gatt server";
+            const serviceTwo = await serverTwo.getPrimaryService(primaryServiceUuidTwo);
+            upTextTwo.innerText = "Found service";
+            connectButtonTwo.innerText = "connected";
+        }
+
+
         const init = () => {
             socket = io.connect('/');
             socket.on('connect', () => {
                 console.log(`Connected: ${socket.id}`);
             });
-            connectButton.addEventListener("click", handleButtonClick);
-            disconnectButton.addEventListener("click", handleButtonClickTwo);
+            connectButton.addEventListener("click", handleButtonConnect);
+            disconnectButton.addEventListener("click", e => handleButtonDisconnect(e));
+            connectButtonTwo.addEventListener("click", handleButtonConnectTwo);
+            disconnectButtonTwo.addEventListener("click",  e => handleButtonDisconnect(e));
         }
         init();
 
