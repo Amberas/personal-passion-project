@@ -18,7 +18,8 @@
 #include <Arduino_LSM9DS1.h>
 #include <ArduinoBLE.h>
 
-float x, y, z;
+float x,
+    y, z;
 int degreesX = 0;
 int degreesY = 0;
 
@@ -128,5 +129,6 @@ void loop()
     Serial.print(degreesY);
     Serial.println("  degrees");
   }
-  delay(1000);
+
+  delay(500);
 }

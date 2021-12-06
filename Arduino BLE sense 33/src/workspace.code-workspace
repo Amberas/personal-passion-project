@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../Firebeetle ESP32"
+		},
+		{
+			"name": "Arduino BLE sense 33",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
