@@ -8,8 +8,10 @@
   },
   "author": "",
   "license": "ISC",
-    "dependencies": {
-      "noble": "abandonware/noble"
-    }
-
+  "dependencies": {
+    "kalman-filter": "^1.9.2",
+    "kalmanjs": "^1.1.0",
+    "noble": "abandonware/noble",
+    "node-osc": "^6.1.11"
+  }
 }

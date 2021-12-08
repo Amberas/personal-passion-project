@@ -1,0 +1,123 @@
+{
+  "name": "kalman-filter",
+  "version": "1.9.2",
+  "description": "Kalman filter (and Extended Kalman Filter) Multi-dimensional implementation in Javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "xo && ava",
+    "semantic-release": "semantic-release",
+    "build-demo": "build && browserify -d -r ./demo/src/main.js:main > docs/demo.js && cp dist/kalman-filter.js docs/dist/kalman-filter.js",
+    "serve-demo": "http-server docs/",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/piercus/kalman-filter.git"
+  },
+  "release": {
+    "branches": [
+      "master"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm",
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            {
+              "path": "dist/kalman-filter.js",
+              "label": "kalman-filter.js (Raw JS distribution)"
+            },
+            {
+              "path": "dist/kalman-filter.min.js",
+              "label": "kalman-filter.min.js (Minified JS distribution)"
+            }
+          ]
+        }
+      ],
+      "@semantic-release/git"
+    ]
+  },
+  "keywords": [
+    "kalman",
+    "filter",
+    "kalmanfilter",
+    "kalman-filter",
+    "extended",
+    "extended-kalman-filter",
+    "extended-kalmanfilter",
+    "extended-kalman",
+    "extended-filter",
+    "constant",
+    "speed",
+    "acceleration",
+    "dynamic",
+    "model",
+    "tracking",
+    "math",
+    "smoothing",
+    "multi-dimension",
+    "noise",
+    "linear",
+    "dynamic",
+    "models",
+    "forward",
+    "smoothing",
+    "online",
+    "forward-backward",
+    "smoothing",
+    "autocovariance",
+    "correlation",
+    "covariance"
+  ],
+  "author": "Pierre Colle <piercus@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/piercus/kalman-filter/issues"
+  },
+  "homepage": "https://github.com/piercus/kalman-filter#readme",
+  "devDependencies": {
+    "@semantic-release/git": "^9.0.0",
+    "ava": "^3.8.2",
+    "browserify": "^16.5.2",
+    "cholesky": "^1.2.0",
+    "hasard": "^1.6.1",
+    "semantic-release": "^17.1.1",
+    "webpack": "^5.21.1",
+    "webpack-cli": "^4.5.0",
+    "xo": "^0.37.1"
+  },
+  "dependencies": {
+    "@rayyamhk/matrix": "^1.0.5",
+    "matrix-inverse": "^2.0.0"
+  },
+  "xo": {
+    "ignores": [
+      "./docs/**",
+      "./dist/**"
+    ],
+    "rules": {
+      "unicorn/no-array-reduce": 0,
+      "no-multi-assign": 0,
+      "unicorn/no-reduce": 0,
+      "import/no-unresolved": 0,
+      "ava/prefer-async-await": 0,
+      "ava/no-skip-test": 1,
+      "camelcase": [
+        0,
+        {
+          "ignoreDestructuring": true
+        }
+      ],
+      "valid-jsdoc": [
+        1,
+        {
+          "requireParamDescription": false,
+          "requireReturnDescription": false
+        }
+      ]
+    }
+  }
+}
