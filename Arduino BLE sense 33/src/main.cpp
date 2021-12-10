@@ -17,6 +17,7 @@
 
 #include <Arduino_LSM9DS1.h>
 #include <ArduinoBLE.h>
+#include <Arduino.h>
 
 float x,
     y, z;
