@@ -3,6 +3,20 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <Arduino.h>
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
+#include <SPI.h>
+
+//pin for ESP32
+  #define TFT_CS        5
+  #define TFT_RST       4
+  #define TFT_DC        2
+
+
+// For 1.44" and 1.8" TFT with ST7735 use:
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+float p = 3.1415926;
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -28,10 +42,34 @@ class MyServerCallbacks : public BLEServerCallbacks
   }
 };
 
+void eyes()
+{
+  //EYES
+  tft.fillCircle(43, 50, 8, ST77XX_WHITE);
+  tft.fillCircle(85, 50, 8, ST77XX_WHITE);
+  delay(5000);
+  tft.fillCircle(43, 50, 8, ST77XX_BLACK);
+  tft.fillCircle(85, 50, 8, ST77XX_BLACK);
+}
+
+void mouth() 
+{
+  // MOUTH
+  tft.fillCircle(64, 80, 32, ST77XX_WHITE);
+  tft.fillCircle(64, 50, 42, ST77XX_BLACK);
+}
+
 void setup()
 {
   Serial.begin(9600);
+  Serial.print(F("Hello! ST77xx TFT Test"));
 
+  //DISPLAY
+  // Use this initializer if using a 1.8" TFT screen:
+  tft.initR(INITR_BLACKTAB); // Init ST7735S chip, black tab
+  Serial.println("Initialized");
+
+  //BLUETOOTH
   // Create the BLE Device
   BLEDevice::init("ESP32");
 
@@ -59,6 +97,13 @@ void setup()
   pAdvertising->setMinPreferred(0x0); // set value to 0x00 to not advertise this parameter
   BLEDevice::startAdvertising();
   Serial.println("Waiting a client connection to notify...");
+
+  uint16_t time = millis();
+  tft.fillScreen(ST77XX_BLACK);
+  time = millis() - time;
+
+  tft.fillScreen(ST77XX_BLACK);
+  mouth();
 }
 
 void loop()
@@ -85,4 +130,7 @@ void loop()
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
   }
+
+  eyes();
+  delay(200);
 }

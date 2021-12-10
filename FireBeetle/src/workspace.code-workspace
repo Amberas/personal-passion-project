@@ -1,11 +1,11 @@
 {
 	"folders": [
 		{
-			"path": ".."
+			"path": "../../Arduino BLE sense 33"
 		},
 		{
-			"name": "Arduino BLE sense 33",
-			"path": "../../Arduino BLE sense 33"
+			"name": "FireBeetle",
+			"path": ".."
 		}
 	],
 	"settings": {}
