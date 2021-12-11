@@ -27,7 +27,7 @@ uint32_t valueSensorSoil = 0;
 uint8_t sensor_pinSoil = 35;
 
 uint32_t valueSensorLight = 0;
-uint8_t sensor_pinLight = 34;
+uint8_t sensor_pinLight = 32;
 
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
@@ -114,22 +114,26 @@ void setup()
 
 void loop()
 {
+  //soil
+  valueSensorSoil = analogRead(sensor_pinSoil);
+  Serial.println(valueSensorSoil);
+
+  //light
+  valueSensorLight = analogRead(sensor_pinLight);
+  Serial.println(analogRead(sensor_pinLight));
+
   // notify changed value
   if (deviceConnected)
   {
     //soil
-    valueSensorSoil = analogRead(sensor_pinSoil);
     pCharacteristic->setValue(valueSensorSoil);
-    Serial.println(valueSensorSoil);
     pCharacteristic->notify();
-    delay(500); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+    delay(5); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
 
     //light
-    valueSensorLight = analogRead(sensor_pinLight);
     lightCharacteristic->setValue(valueSensorLight);
-    Serial.println(valueSensorLight);
     pCharacteristic->notify();
-    delay(500);
+    delay(5);
   }
   // disconnecting
   if (!deviceConnected && oldDeviceConnected)
