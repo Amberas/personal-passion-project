@@ -20,14 +20,18 @@ float p = 3.1415926;
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
+BLECharacteristic *lightCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
-uint32_t value = 0;
+uint32_t valueSensorSoil = 0;
+uint8_t sensor_pinSoil = 35;
 
-
+uint32_t valueSensorLight = 0;
+uint8_t sensor_pinLight = 34;
 
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define CHARACTERISTIC_UUID_LIGHT "a1bee35a-5ab9-11ec-bf63-0242ac130002"
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
@@ -82,6 +86,7 @@ void setup()
 
   // Create a BLE Characteristic
   pCharacteristic = pService->createCharacteristic( CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+  lightCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_LIGHT, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
@@ -98,6 +103,7 @@ void setup()
   BLEDevice::startAdvertising();
   Serial.println("Waiting a client connection to notify...");
 
+
   uint16_t time = millis();
   tft.fillScreen(ST77XX_BLACK);
   time = millis() - time;
@@ -111,10 +117,19 @@ void loop()
   // notify changed value
   if (deviceConnected)
   {
-    pCharacteristic->setValue((uint8_t *)&value, 4);
+    //soil
+    valueSensorSoil = analogRead(sensor_pinSoil);
+    pCharacteristic->setValue(valueSensorSoil);
+    Serial.println(valueSensorSoil);
     pCharacteristic->notify();
-    value++;
-    delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+    delay(500); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+
+    //light
+    valueSensorLight = analogRead(sensor_pinLight);
+    lightCharacteristic->setValue(valueSensorLight);
+    Serial.println(valueSensorLight);
+    pCharacteristic->notify();
+    delay(500);
   }
   // disconnecting
   if (!deviceConnected && oldDeviceConnected)
