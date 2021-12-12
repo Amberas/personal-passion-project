@@ -54,25 +54,27 @@ const kalmanFilterFunc = (observations, newObservations) => {
 }
 
 const sendDistance = (rssi, name) => {
-    if (name == "Arduino") {
-        observationsArduino.push(rssi);
-        const newRSSI = kalmanFilterFunc(observationsArduino, newObservationsArduino);
-        console.log("newRSSI Arduino:", newRSSI);
-        if (newRSSI <= -60) {
-            client.send(`/${name}`, 0);
-        } else {
-            client.send(`/${name}`, 1);
-        }
-    } else if (name == "ESP32") {
-        newObservationsESP32.push(rssi);
-        const newRSSI = kalmanFilterFunc(newObservationsESP32, newObservationsESP32);
-        console.log("newRSSI ESP32:", newRSSI);
-        if (newRSSI <= -60) {
-            client.send(`/${name}`, 0);
-        } else {
-            client.send(`/${name}`, 1);
-        }
+    if (rssi) {
+        if (name == "Arduino") {
+            observationsArduino.push(rssi);
+            const newRSSI = kalmanFilterFunc(observationsArduino, newObservationsArduino);
+            console.log("newRSSI Arduino:", newRSSI);
+            if (newRSSI <= -60) {
+                client.send(`/${name}`, 0);
+            } else {
+                client.send(`/${name}`, 1);
+            }
+        } else if (name == "ESP32") {
+            newObservationsESP32.push(rssi);
+            const newRSSI = kalmanFilterFunc(newObservationsESP32, newObservationsESP32);
+            console.log("newRSSI ESP32:", newRSSI);
+            if (newRSSI <= -60) {
+                client.send(`/${name}`, 0);
+            } else {
+                client.send(`/${name}`, 1);
+            }
 
+        }
     }
 }
 
@@ -104,8 +106,11 @@ noble.on('discover', async (peripheral) => {
     if (localName == "Arduino") {
         await peripheral.connectAsync();
         setInterval(async function () {
-            const rssi = await peripheral.updateRssiAsync();
-            sendDistance(rssi, "Arduino");
+            peripheral.updateRssi(function () {
+                const rssi = peripheral.rssi;
+                sendDistance(rssi, "Arduino");
+            }
+            )
         }, 2000);
         const txPower = peripheral.advertisement.txPower;
         console.log(txPower);
@@ -124,11 +129,15 @@ noble.on('discover', async (peripheral) => {
     if (localName == "ESP32") {
         await peripheral.connectAsync();
         setInterval(async function () {
-            const rssi = await peripheral.updateRssiAsync();
-            sendDistance(rssi, "ESP32");
+            peripheral.updateRssi(function () {
+                const rssi = peripheral.rssi;
+                sendDistance(rssi, "ESP32");
+            }
+            )
         }, 2000);
         const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32, characteristicUUIDs.ESP32);
         const soil = await characteristics[0];
+        console.log("soil:", soil);
         listen(soil, "soil", 10, 250);
     }
 
