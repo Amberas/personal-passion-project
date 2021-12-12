@@ -54,6 +54,7 @@ const kalmanFilterFunc = (observations, newObservations) => {
 }
 
 const sendDistance = (rssi, name) => {
+    console.log("send distance")
     if (rssi) {
         if (name == "Arduino") {
             observationsArduino.push(rssi);
@@ -65,8 +66,8 @@ const sendDistance = (rssi, name) => {
                 client.send(`/${name}`, 1);
             }
         } else if (name == "ESP32") {
-            newObservationsESP32.push(rssi);
-            const newRSSI = kalmanFilterFunc(newObservationsESP32, newObservationsESP32);
+            observationsESP32.push(rssi);
+            const newRSSI = kalmanFilterFunc(observationsESP32, newObservationsESP32);
             console.log("newRSSI ESP32:", newRSSI);
             if (newRSSI <= -60) {
                 client.send(`/${name}`, 0);
@@ -128,16 +129,15 @@ noble.on('discover', async (peripheral) => {
 
     if (localName == "ESP32") {
         await peripheral.connectAsync();
-        setInterval(async function () {
+        setInterval(function () {
             peripheral.updateRssi(function () {
                 const rssi = peripheral.rssi;
                 sendDistance(rssi, "ESP32");
             }
             )
-        }, 1000);
+        }, 500);
         const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32, characteristicUUIDs.ESP32);
         const soil = await characteristics[0];
-        console.log("soil:", soil);
         listen(soil, "soil", 10, 250);
     }
 
