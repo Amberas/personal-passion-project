@@ -134,7 +134,7 @@ noble.on('discover', async (peripheral) => {
                 sendDistance(rssi, "ESP32");
             }
             )
-        }, 2000);
+        }, 1000);
         const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32, characteristicUUIDs.ESP32);
         const soil = await characteristics[0];
         console.log("soil:", soil);
