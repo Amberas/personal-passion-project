@@ -19,6 +19,14 @@
 #include <ArduinoBLE.h>
 #include <Arduino.h>
 
+
+
+
+
+
+// For 1.44" and 1.8" TFT with ST7735 use:
+//Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+
 float x,
     y, z;
 int degreesX = 0;
@@ -33,28 +41,16 @@ BLEIntCharacteristic downCharacteristic("12345678-1234-5678-1234-56789ABCDEF2", 
 BLEIntCharacteristic leftCharacteristic("12345678-1234-5678-1234-56789ABCDEF3", BLERead | BLENotify);
 BLEIntCharacteristic rightCharacteristic("12345678-1234-5678-1234-56789ABCDEF4", BLERead | BLENotify);
 
+
+
 void setup()
 {
   Serial.begin(9600);
-  while (!Serial)
-    ;
-  Serial.println("Started");
-
-  if (!IMU.begin())
-  {
-    Serial.println("Failed to initialize IMU!");
-    while (1)
-      ;
-  }
+  IMU.begin();
 
   // begin initialization
-  if (!BLE.begin())
-  {
-    Serial.println("starting BLE failed!");
+  BLE.begin();
 
-    while (1)
-      ;
-  }
 
   // set the local name peripheral advertises
   BLE.setLocalName("ArduinoNano");
@@ -81,6 +77,7 @@ void setup()
 
 void loop()
 {
+
 
   // poll for BLE events
   BLE.poll();
@@ -129,7 +126,10 @@ void loop()
     Serial.print("Tilting right ");
     Serial.print(degreesY);
     Serial.println("  degrees");
-  }
+  }  
 
   delay(500);
+
+
+  
 }

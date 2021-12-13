@@ -1,19 +1,11 @@
 {
 	"folders": [
 		{
-			"path": "../../../node-application/noble"
-		},
-		{
-			"name": "LilyPad Blueduino",
-			"path": "../../../../../Documents/PlatformIO/Projects/LilyPad Blueduino"
+			"path": ".."
 		},
 		{
 			"name": "FireBeetle",
 			"path": "../../FireBeetle"
-		},
-		{
-			"name": "Arduino BLE sense 33",
-			"path": ".."
 		}
 	],
 	"settings": {}

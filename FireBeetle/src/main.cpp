@@ -20,18 +20,18 @@ float p = 3.1415926;
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
-BLECharacteristic *lightCharacteristic = NULL;
+BLECharacteristic *touchCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint32_t valueSensorSoil = 0;
 uint8_t sensor_pinSoil = 35;
 
-uint32_t valueSensorLight = 0;
-uint8_t sensor_pinLight = 32;
+uint32_t valueSensorTouch = 0;
+uint8_t sensor_pinTouch = 15;
 
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define CHARACTERISTIC_UUID_LIGHT "a1bee35a-5ab9-11ec-bf63-0242ac130002"
+#define CHARACTERISTIC_UUID_TOUCH "a1bee35a-5ab9-11ec-bf63-0242ac130002"
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
@@ -52,6 +52,7 @@ void eyes()
   tft.fillCircle(43, 50, 8, ST77XX_WHITE);
   tft.fillCircle(85, 50, 8, ST77XX_WHITE);
   delay(5000);
+
   tft.fillCircle(43, 50, 8, ST77XX_BLACK);
   tft.fillCircle(85, 50, 8, ST77XX_BLACK);
 }
@@ -65,8 +66,9 @@ void mouth()
 
 void setup()
 {
-  Serial.begin(9600);
-  Serial.print(F("Hello! ST77xx TFT Test"));
+  Serial.begin(115200);
+
+  pinMode(15, INPUT);
 
   //DISPLAY
   // Use this initializer if using a 1.8" TFT screen:
@@ -86,11 +88,12 @@ void setup()
 
   // Create a BLE Characteristic
   pCharacteristic = pService->createCharacteristic( CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
-  lightCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_LIGHT, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+  touchCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_TOUCH, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
   pCharacteristic->addDescriptor(new BLE2902());
+  touchCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();
@@ -114,27 +117,32 @@ void setup()
 
 void loop()
 {
+
   //soil
   valueSensorSoil = analogRead(sensor_pinSoil);
+  Serial.print("soil:");
   Serial.println(valueSensorSoil);
 
   //light
-  valueSensorLight = analogRead(sensor_pinLight);
-  Serial.println(analogRead(sensor_pinLight));
+  valueSensorTouch = touchRead(15);
+  Serial.print("touch:");
+  Serial.println(valueSensorTouch);
 
   // notify changed value
   if (deviceConnected)
   {
+
     //soil
     pCharacteristic->setValue(valueSensorSoil);
     pCharacteristic->notify();
-    delay(5); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+    delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
 
-    //light
-    lightCharacteristic->setValue(valueSensorLight);
-    pCharacteristic->notify();
-    delay(5);
+    //touch
+    touchCharacteristic->setValue(valueSensorTouch);
+    touchCharacteristic->notify();
+    delay(3);
   }
+
   // disconnecting
   if (!deviceConnected && oldDeviceConnected)
   {
@@ -143,6 +151,7 @@ void loop()
     Serial.println("start advertising");
     oldDeviceConnected = deviceConnected;
   }
+
   // connecting
   if (deviceConnected && !oldDeviceConnected)
   {
