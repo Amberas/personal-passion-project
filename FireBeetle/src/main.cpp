@@ -9,10 +9,9 @@
 #include <SPI.h>
 
 //pin for ESP32
-  #define TFT_CS        5
-  #define TFT_RST       4
-  #define TFT_DC        2
-
+#define TFT_CS 5
+#define TFT_RST 4
+#define TFT_DC 2
 
 // For 1.44" and 1.8" TFT with ST7735 use:
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
@@ -21,6 +20,8 @@ float p = 3.1415926;
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
 BLECharacteristic *touchCharacteristic = NULL;
+BLECharacteristic *screenCharacteristic = NULL;
+
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint32_t valueSensorSoil = 0;
@@ -32,48 +33,37 @@ uint8_t sensor_pinTouch = 15;
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define CHARACTERISTIC_UUID_TOUCH "a1bee35a-5ab9-11ec-bf63-0242ac130002"
+#define CHARACTERISTIC_UUID_SCREEN "c92ecec0-5c51-11ec-bf63-0242ac130002"
 
-class MyServerCallbacks : public BLEServerCallbacks
-{
-  void onConnect(BLEServer *pServer)
-  {
-    deviceConnected = true;
-  };
-
-  void onDisconnect(BLEServer *pServer)
-  {
-    deviceConnected = false;
-  }
-};
+int last;
+int lastTouch;
 
 void eyes()
 {
   //EYES
-  tft.fillCircle(43, 50, 8, ST77XX_WHITE);
-  tft.fillCircle(85, 50, 8, ST77XX_WHITE);
+  tft.fillCircle(43, 120, 8, ST77XX_WHITE);
+  tft.fillCircle(85, 120, 8, ST77XX_WHITE);
   delay(5000);
 
-  tft.fillCircle(43, 50, 8, ST77XX_BLACK);
-  tft.fillCircle(85, 50, 8, ST77XX_BLACK);
+  tft.fillCircle(43, 120, 8, ST77XX_BLACK);
+  tft.fillCircle(85, 120, 8, ST77XX_BLACK);
 }
 
-void mouth() 
+void mouth()
 {
   // MOUTH
   tft.fillCircle(64, 80, 32, ST77XX_WHITE);
-  tft.fillCircle(64, 50, 42, ST77XX_BLACK);
+  tft.fillCircle(64, 110, 42, ST77XX_BLACK);
 }
 
 void setup()
 {
-  Serial.begin(115200);
-
+  //TOUCH
   pinMode(15, INPUT);
 
   //DISPLAY
   // Use this initializer if using a 1.8" TFT screen:
   tft.initR(INITR_BLACKTAB); // Init ST7735S chip, black tab
-  Serial.println("Initialized");
 
   //BLUETOOTH
   // Create the BLE Device
@@ -81,19 +71,19 @@ void setup()
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
 
   // Create the BLE Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
   // Create a BLE Characteristic
-  pCharacteristic = pService->createCharacteristic( CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+  pCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
   touchCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_TOUCH, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
+  screenCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_SCREEN, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_WRITE);
 
-  // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
   pCharacteristic->addDescriptor(new BLE2902());
   touchCharacteristic->addDescriptor(new BLE2902());
+  screenCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();
@@ -104,61 +94,49 @@ void setup()
   pAdvertising->setScanResponse(false);
   pAdvertising->setMinPreferred(0x0); // set value to 0x00 to not advertise this parameter
   BLEDevice::startAdvertising();
-  Serial.println("Waiting a client connection to notify...");
 
-
-  uint16_t time = millis();
-  tft.fillScreen(ST77XX_BLACK);
-  time = millis() - time;
-
+  //DISPLAY
   tft.fillScreen(ST77XX_BLACK);
   mouth();
 }
 
-void loop()
-{
 
-  //soil
-  valueSensorSoil = analogRead(sensor_pinSoil);
-  Serial.print("soil:");
-  Serial.println(valueSensorSoil);
-
-  //light
-  valueSensorTouch = touchRead(15);
-  Serial.print("touch:");
-  Serial.println(valueSensorTouch);
-
-  // notify changed value
-  if (deviceConnected)
+//only send data when there is a change
+void changedSensor () {
+  int r = analogRead(sensor_pinSoil);
+  if (r != last)
   {
-
-    //soil
-    pCharacteristic->setValue(valueSensorSoil);
+    last = r;
+    pCharacteristic->setValue(r);
     pCharacteristic->notify();
     delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+  }
+}
 
-    //touch
-    touchCharacteristic->setValue(valueSensorTouch);
+//only send data when there is a change
+void changedSensorTouch () {
+  int r = touchRead(15);
+  if (r != lastTouch)
+  {
+    lastTouch = r;
+    touchCharacteristic->setValue(r);
     touchCharacteristic->notify();
-    delay(3);
+    delay(3); 
   }
+}
 
-  // disconnecting
-  if (!deviceConnected && oldDeviceConnected)
-  {
-    delay(500);                  // give the bluetooth stack the chance to get things ready
-    pServer->startAdvertising(); // restart advertising
-    Serial.println("start advertising");
-    oldDeviceConnected = deviceConnected;
-  }
+void loop()
+{
+  //soil
+  changedSensor();
 
-  // connecting
-  if (deviceConnected && !oldDeviceConnected)
-  {
-    // do stuff here on connecting
-    oldDeviceConnected = deviceConnected;
-  }
+  //touch
+  changedSensorTouch();
 
+  //getting data from node
+  std::string rxValue = screenCharacteristic->getValue();
+
+  //DISPLAY
   eyes();
   delay(200);
 }
