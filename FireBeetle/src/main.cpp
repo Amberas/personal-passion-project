@@ -38,8 +38,17 @@ uint8_t sensor_pinTouch = 15;
 int last = 0;
 int lastTouch = 0;
 
-void eyes()
+void mouth()
 {
+  // MOUTH
+  tft.fillScreen(ST77XX_BLACK);
+  tft.fillCircle(64, 80, 32, ST77XX_WHITE);
+  tft.fillCircle(64, 110, 42, ST77XX_BLACK);
+}
+
+void awake()
+{
+
   //EYES
   tft.fillCircle(43, 120, 8, ST77XX_WHITE);
   tft.fillCircle(85, 120, 8, ST77XX_WHITE);
@@ -49,11 +58,30 @@ void eyes()
   tft.fillCircle(85, 120, 8, ST77XX_BLACK);
 }
 
-void mouth()
+void sleeping()
 {
-  // MOUTH
-  tft.fillCircle(64, 80, 32, ST77XX_WHITE);
-  tft.fillCircle(64, 110, 42, ST77XX_BLACK);
+  tft.fillScreen(ST77XX_BLACK);
+  delay(1000);
+  //ZZZ
+  tft.setCursor(70, 40);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(3);
+  tft.println("Z");
+  delay(1000);
+
+  tft.println();
+  tft.setCursor(60, 80);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(3);
+  tft.println("Z");
+  delay(1000);
+
+  tft.println();
+  tft.setCursor(50, 120);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(3);
+  tft.println("Z");
+  delay(1000);
 }
 
 void setup()
@@ -98,12 +126,11 @@ void setup()
 
   //DISPLAY
   tft.fillScreen(ST77XX_BLACK);
-  mouth();
 }
 
-
 //only send data when there is a change greater than 20
-void changedSensor () {
+void changedSensor()
+{
   int r = analogRead(sensor_pinSoil);
   int tresh = 20;
   int diff = last - r;
@@ -117,14 +144,15 @@ void changedSensor () {
 }
 
 //only send data when there is a change
-void changedSensorTouch () {
+void changedSensorTouch()
+{
   int r = touchRead(15);
   if (r != lastTouch)
   {
     lastTouch = r;
     touchCharacteristic->setValue(r);
     touchCharacteristic->notify();
-    delay(3); 
+    delay(3);
   }
 }
 
@@ -138,9 +166,28 @@ void loop()
 
   //getting data from node
   std::string rxValue = screenCharacteristic->getValue();
-  Serial.println(rxValue.length());
+  
 
-      //DISPLAY
-      eyes();
-  delay(200);
+  //DEBUGGING
+  /*for (int i = 0; i < rxValue.length(); i++){
+    Serial.print("rValue[");
+    Serial.print(i);
+    Serial.print("] = '");
+    Serial.print(rxValue[i]);
+    Serial.println("'");
+  }*/
+
+  if (rxValue[0] == '0')
+  {
+    sleeping();
+    delay(500);
+  }
+  else
+  {
+    //DISPLAY
+    mouth();
+
+    awake();
+    delay(200);
+  }
 }
