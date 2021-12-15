@@ -70,22 +70,24 @@ const sendDistance = (rssi, name, char) => {
             const newRSSI = kalmanFilterFunc(observationsESP32, newObservationsESP32);
             console.log("newRSSI ESP32:", newRSSI);
             if (newRSSI <= -60) {
-                char.write(Buffer.from('0', 'utf8'), true, function (error) {
+                char.write(Buffer.from('0'), true, function (error) {
                     if (error) {
                         console.log(error);
                     } else {
-                        console.log("written");
+                        console.log("written 0");
                     }
-                }.bind(this));    
+                }.bind(this));  
+
                 client.send(`/${name}`, 0);
             } else {
-                char.write(Buffer.from('1', 'utf8'), true, function (error) { 
+                char.write(Buffer.from('1'), true, function (error) { 
                     if (error) {
                         console.log(error);
                     } else {
-                        console.log("written");
+                        console.log("written 1");
                     }
-                }.bind(this));    
+                }.bind(this));  
+
 
                 client.send(`/${name}`, 1);
             }
