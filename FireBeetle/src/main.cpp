@@ -35,8 +35,8 @@ uint8_t sensor_pinTouch = 15;
 #define CHARACTERISTIC_UUID_TOUCH "a1bee35a-5ab9-11ec-bf63-0242ac130002"
 #define CHARACTERISTIC_UUID_SCREEN "c92ecec0-5c51-11ec-bf63-0242ac130002"
 
-int last;
-int lastTouch;
+int last = 0;
+int lastTouch = 0;
 
 void eyes()
 {
@@ -58,6 +58,7 @@ void mouth()
 
 void setup()
 {
+  Serial.begin(9600);
   //TOUCH
   pinMode(15, INPUT);
 
@@ -101,10 +102,12 @@ void setup()
 }
 
 
-//only send data when there is a change
+//only send data when there is a change greater than 20
 void changedSensor () {
   int r = analogRead(sensor_pinSoil);
-  if (r != last)
+  int tresh = 20;
+  int diff = last - r;
+  if (abs(diff) >= tresh)
   {
     last = r;
     pCharacteristic->setValue(r);
@@ -135,8 +138,9 @@ void loop()
 
   //getting data from node
   std::string rxValue = screenCharacteristic->getValue();
+  Serial.println(rxValue.length());
 
-  //DISPLAY
-  eyes();
+      //DISPLAY
+      eyes();
   delay(200);
 }
