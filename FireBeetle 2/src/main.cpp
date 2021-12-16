@@ -30,10 +30,10 @@ uint8_t sensor_pinSoil = 35;
 uint32_t valueSensorTouch = 0;
 uint8_t sensor_pinTouch = 15;
 
-#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define CHARACTERISTIC_UUID_TOUCH "a1bee35a-5ab9-11ec-bf63-0242ac130002"
-#define CHARACTERISTIC_UUID_SCREEN "c92ecec0-5c51-11ec-bf63-0242ac130002"
+#define SERVICE_UUID "0d3e9cec-9c0d-42d9-b752-93ca7cdbd31a"
+#define CHARACTERISTIC_UUID "a350e8ca-5e8e-11ec-bf63-0242ac130002"
+#define CHARACTERISTIC_UUID_TOUCH "a6b802d2-5e8e-11ec-bf63-0242ac130002"
+#define CHARACTERISTIC_UUID_SCREEN "a9eb506c-5e8e-11ec-bf63-0242ac130002"
 
 int last = 0;
 int lastTouch = 0;
@@ -96,7 +96,7 @@ void setup()
 
   //BLUETOOTH
   // Create the BLE Device
-  BLEDevice::init("ESP32");
+  BLEDevice::init("ESP32TWO");
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
