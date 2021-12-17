@@ -1,14 +1,14 @@
-// Read the battery level of the first found peripheral exposing the Battery Level characteristic
-
 const noble = require('noble');
 const { Client } = require("node-osc");
 const { KalmanFilter } = require('kalman-filter');
 
 const client = new Client('192.168.0.174', 8000);
 
-const map_range = (value, low1, high1, low2, high2) => {
-    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
-}
+const observationsArduino = [];
+const newObservationsArduino = [];
+
+const observationsESP32 = [];
+const newObservationsESP32 = [];
 
 //primairy service UUIDs 
 const serviceUUIDs = {
@@ -24,6 +24,13 @@ const characteristicUUIDs = {
     ESP32TWO: [["a350e8ca-5e8e-11ec-bf63-0242ac130002"], ["a6b802d2-5e8e-11ec-bf63-0242ac130002"], ["a9eb506c-5e8e-11ec-bf63-0242ac130002"]]
 }
 
+
+//function processing
+const map_range = (value, low1, high1, low2, high2) => {
+    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
+//listen for characteristic change
 const listen = (variable, name, valueLow, valueHigh) => {
     variable.on('data', function (data, isNotification) {
         console.log(`${name}:`, data.readUInt8(0));
@@ -36,12 +43,7 @@ const listen = (variable, name, valueLow, valueHigh) => {
     });
 }
 
-const observationsArduino = [];
-const newObservationsArduino = [];
-
-const observationsESP32 = [];
-const newObservationsESP32 = [];
-
+//kalmanfilter -> against noise
 const kalmanFilterFunc = (observations, newObservations) => {
     const kFilter = new KalmanFilter();
     const res = kFilter.filterAll(observations);
@@ -55,6 +57,7 @@ const kalmanFilterFunc = (observations, newObservations) => {
     return newObservations[newObservations.length - 1]
 }
 
+//send proximity to Ableton + send to arduino (display)
 const sendDistance = (rssi, name, char) => {
     console.log("send distance")
     if (rssi) {
@@ -71,7 +74,7 @@ const sendDistance = (rssi, name, char) => {
             observationsESP32.push(rssi);
             const newRSSI = kalmanFilterFunc(observationsESP32, newObservationsESP32);
             console.log("newRSSI ESP32:", newRSSI);
-            if (newRSSI <= -60) {
+            if (newRSSI <= -70) {
                 char.write(Buffer.from('0'), true, function (error) {
                     if (error) {
                         console.log(error);
@@ -98,86 +101,94 @@ const sendDistance = (rssi, name, char) => {
     }
 }
 
-noble.on('stateChange', async (state) => {
-    if (state === 'poweredOn') {
-        await noble.startScanningAsync(serviceUUIDs);
-    }
-});
 
-noble.on('scanStart', function () {
-    console.log('scanStart');
-});
+const init = () => {
 
-noble.on('scanStop', function () {
-    console.log('scanStop');
-});
 
-noble.on('discover', async (peripheral) => {
-    const localName = peripheral.advertisement.localName;
-
-    peripheral.on("connect", function () {
-        console.log(localName, "connected");
+    noble.on('stateChange', async (state) => {
+        if (state === 'poweredOn') {
+            await noble.startScanningAsync(serviceUUIDs);
+        }
     });
 
-    peripheral.on("disconnect", function () {
-        console.log(localName, "disconnected");
+    noble.on('scanStart', function () {
+        console.log('scanStart');
     });
 
-    if (localName == "Arduino") {
-        await peripheral.connectAsync();
-        setInterval(async function () {
-            peripheral.updateRssi(function () {
-                const rssi = peripheral.rssi;
-                sendDistance(rssi, "Arduino");
-            }
-            )
-        }, 2000);
-        const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.Arduino, characteristicUUIDs.Arduino.values());
-        const up = await characteristics[0];
-        const down = await characteristics[1];
-        const right = await characteristics[2];
-        const left = await characteristics[3];
-        listen(up, "up", 10, 100);
-        listen(down, "down", 10, 100);
-        listen(right, "right", 10, 100);
-        listen(left, "left", 10, 100);
+    noble.on('scanStop', function () {
+        console.log('scanStop');
+    });
 
-    }
+    noble.on('discover', async (peripheral) => {
+        const localName = peripheral.advertisement.localName;
 
-    if (localName == "ESP32") {
-        await peripheral.connectAsync();
-        const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32, characteristicUUIDs.ESP32.values());
-        const soil = await characteristics[0];
-        const touch = await characteristics[1];
-        const screen = await characteristics[2];
-        setInterval(function () {
-            peripheral.updateRssi(function () {
-                const rssi = peripheral.rssi;
-                sendDistance(rssi, "ESP32", screen);
-            }
-            )
-        }, 2000);
+        peripheral.on("connect", function () {
+            console.log(localName, "connected");
+        });
 
-        listen(soil, "soil", 10, 250);
-        listen(touch, "touch", 5, 10);
-    }
+        peripheral.on("disconnect", function () {
+            console.log(localName, "disconnected");
+        });
 
-    if (localName == "ESP32TWO") {
-        await peripheral.connectAsync();
-        const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32TWO, characteristicUUIDs.ESP32TWO.values());
-        const soil = await characteristics[0];
-        const touch = await characteristics[1];
-        const screen = await characteristics[2];
-        setInterval(function () {
-            peripheral.updateRssi(function () {
-                const rssi = peripheral.rssi;
-                sendDistance(rssi, "ESP32TWO", screen);
-            }
-            )
-        }, 2000);
+        if (localName == "Arduino") {
+            await peripheral.connectAsync();
+            setInterval(async function () {
+                peripheral.updateRssi(function () {
+                    const rssi = peripheral.rssi;
+                    sendDistance(rssi, "Arduino");
+                }
+                )
+            }, 2000);
+            const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.Arduino, characteristicUUIDs.Arduino.values());
+            const up = await characteristics[0];
+            const down = await characteristics[1];
+            const right = await characteristics[2];
+            const left = await characteristics[3];
+            listen(up, "up", 10, 100);
+            listen(down, "down", 10, 100);
+            listen(right, "right", 10, 100);
+            listen(left, "left", 10, 100);
 
-        listen(soil, "soilTwo", 10, 250);
-        listen(touch, "touchTwo", 5, 10);
-    }
+        }
 
-});
+        if (localName == "ESP32") {
+            await peripheral.connectAsync();
+            const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32, characteristicUUIDs.ESP32.values());
+            const soil = await characteristics[0];
+            const touch = await characteristics[1];
+            const screen = await characteristics[2];
+            setInterval(function () {
+                peripheral.updateRssi(function () {
+                    const rssi = peripheral.rssi;
+                    sendDistance(rssi, "ESP32", screen);
+                }
+                )
+            }, 2000);
+
+            listen(soil, "soil", 10, 250);
+            listen(touch, "touch", 5, 10);
+        }
+
+        if (localName == "ESP32TWO") {
+            await peripheral.connectAsync();
+            const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32TWO, characteristicUUIDs.ESP32TWO.values());
+            const soil = await characteristics[0];
+            const touch = await characteristics[1];
+            const screen = await characteristics[2];
+            setInterval(function () {
+                peripheral.updateRssi(function () {
+                    const rssi = peripheral.rssi;
+                    sendDistance(rssi, "ESP32TWO", screen);
+                }
+                )
+            }, 2000);
+
+            listen(soil, "soilTwo", 10, 250);
+            listen(touch, "touchTwo", 5, 10);
+        }
+
+    });
+
+}
+
+init();
