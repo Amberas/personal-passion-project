@@ -38,24 +38,46 @@ uint8_t sensor_pinTouch = 15;
 int last = 0;
 int lastTouch = 0;
 
-void mouth()
+unsigned long previousMillis = 0;
+
+const long interval = 4000;
+
+bool executed = false;
+
+/*void mouth()
 {
   // MOUTH
-  tft.fillScreen(ST77XX_BLACK);
   tft.fillCircle(64, 80, 32, ST77XX_WHITE);
   tft.fillCircle(64, 110, 42, ST77XX_BLACK);
-}
+}*/
 
 void awake()
 {
 
+  unsigned long currentMillis = millis();
+
   //EYES
   tft.fillCircle(43, 120, 8, ST77XX_WHITE);
   tft.fillCircle(85, 120, 8, ST77XX_WHITE);
-  delay(5000);
 
-  tft.fillCircle(43, 120, 8, ST77XX_BLACK);
-  tft.fillCircle(85, 120, 8, ST77XX_BLACK);
+  //MOUTH
+  if (executed == false) {
+    tft.fillScreen(ST77XX_BLACK);
+    tft.fillCircle(64, 80, 32, ST77XX_WHITE);
+    tft.fillCircle(64, 110, 42, ST77XX_BLACK);
+    executed = true;
+  }
+
+  //blink after 5 sec
+  if (currentMillis - previousMillis >= interval)
+  {
+    previousMillis = currentMillis;
+    tft.fillCircle(43, 120, 8, ST77XX_BLACK);
+    tft.fillCircle(85, 120, 8, ST77XX_BLACK);
+    delay(500);
+    //mouth();
+  }
+
 }
 
 void sleeping()
@@ -179,19 +201,16 @@ void loop()
   if (rxValue[0] == '0')
   {
     sleeping();
-    delay(500);
+    executed = false;
   }
   else if (rxValue[0] == '1')
   {
     //DISPLAY
-    mouth();
-
     awake();
-    delay(200);
   }
   else
   {
     sleeping();
-    delay(500);
+    executed = false;
   }
 }
