@@ -79,7 +79,7 @@ const sendDistance = (rssi, name, char) => {
             observationsArduino.push(rssi);
             const newRSSI = kalmanFilterFunc(observationsArduino, newObservationsArduino);
             console.log("newRSSI Arduino:", newRSSI);
-            if (newRSSI <= -70) {
+            if (newRSSI <= -75) {
                 client.send(`/${name}`, 0);
             } else {
                 client.send(`/${name}`, 1);
@@ -88,7 +88,7 @@ const sendDistance = (rssi, name, char) => {
             observationsESP32.push(rssi);
             const newRSSI = kalmanFilterFunc(observationsESP32, newObservationsESP32);
             console.log("newRSSI ESP32:", newRSSI);
-            if (newRSSI <= -70) {
+            if (newRSSI <= -75) {
                 char.write(Buffer.from('0'), true, function (error) {
                     if (error) {
                         console.log(error);
@@ -125,6 +125,8 @@ const init = () => {
             setInterval( async function () {
                 await noble.startScanningAsync(serviceUUIDs);
             }, 5000);
+        } else {
+            noble.stopScanning();
         }
     });
 
@@ -139,16 +141,22 @@ const init = () => {
     noble.on('discover', async (peripheral) => {
         const localName = peripheral.advertisement.localName;
 
+
         peripheral.on("connect", function () {
             console.log(localName, "connected");
         });
 
         peripheral.on("disconnect", function () {
             console.log(localName, "disconnected");
+            peripheral.removeAllListeners('servicesDiscover');
+            peripheral.removeAllListeners('connect');
+            peripheral.removeAllListeners('disconnect');
         });
 
         if (localName == "Arduino") {
-            await peripheral.connectAsync();
+            peripheral.once('connect', function () { 
+                
+            })
             setInterval(async function () {
                 peripheral.updateRssi(function () {
                     const rssi = peripheral.rssi;
