@@ -61,7 +61,8 @@ void awake()
   tft.fillCircle(85, 120, 8, ST77XX_WHITE);
 
   //MOUTH
-  if (executed == false) {
+  if (executed == false)
+  {
     tft.fillScreen(ST77XX_BLACK);
     tft.fillCircle(64, 80, 32, ST77XX_WHITE);
     tft.fillCircle(64, 110, 42, ST77XX_BLACK);
@@ -77,7 +78,6 @@ void awake()
     delay(500);
     //mouth();
   }
-
 }
 
 void sleeping()
@@ -168,14 +168,19 @@ void changedSensor()
 //only send data when there is a change
 void changedSensorTouch()
 {
-  int r = touchRead(15);
-  if (r != lastTouch)
-  {
-    lastTouch = r;
-    touchCharacteristic->setValue(r);
-    touchCharacteristic->notify();
-    delay(3);
+  int touchstat = 0;
+
+  Serial.print(touchRead(15));
+
+      //get evarage of 100 readings to liminate noise
+      for (int i = 0; i < 100; i++)
+  {                                        // used to get a hundred readings of the status of touch
+    touchstat = touchstat + touchRead(15); // adding the hundred readings within the for loop
   }
+  touchstat = touchstat / 100; // dividing by hundred to get average
+  touchCharacteristic->setValue(touchstat);
+  touchCharacteristic->notify();
+  delay(3);
 }
 
 void loop()

@@ -1,10 +1,14 @@
 {
 	"folders": [
 		{
-			"path": "../.."
+			"path": "../../../node-application/noble"
 		},
 		{
 			"name": "FireBeetle",
+			"path": "../../FireBeetle"
+		},
+		{
+			"name": "FireBeetle 2",
 			"path": ".."
 		}
 	],
