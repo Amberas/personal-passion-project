@@ -36,6 +36,20 @@ const listen = (variable, name, valueLow, valueHigh) => {
         console.log(`${name}:`, data.readUInt8(0));
         const number = data.readUInt8(0)
         client.send(`/${name}`, map_range(number, valueLow, valueHigh, 0, 1));
+
+        if (name == "touch" && number <= 18) {
+            console.log("touch");
+            client.send(`/${name}`, 1);
+        } else if (name == "touch") {
+            client.send(`/${name}`, 0);
+        }
+
+        if (name == "touchTwo" && number <= 29) {
+            console.log("touch");
+            client.send(`/${name}`, 1);
+        } else if (name == "touchTwo") {
+            client.send(`/${name}`, 0);
+        }
     });
 
     variable.subscribe(function (error) {
@@ -84,6 +98,7 @@ const sendDistance = (rssi, name, char) => {
                 }.bind(this));
 
                 client.send(`/${name}`, 0);
+                client.send(`/touch`, 0);
             } else {
                 char.write(Buffer.from('1'), true, function (error) {
                     if (error) {
@@ -105,9 +120,11 @@ const sendDistance = (rssi, name, char) => {
 const init = () => {
 
 
-    noble.on('stateChange', async (state) => {
+    noble.on('stateChange', (state) => {
         if (state === 'poweredOn') {
-            await noble.startScanningAsync(serviceUUIDs);
+            setInterval( async function () {
+                await noble.startScanningAsync(serviceUUIDs);
+            }, 5000);
         }
     });
 
@@ -163,7 +180,7 @@ const init = () => {
                     sendDistance(rssi, "ESP32", screen);
                 }
                 )
-            }, 2000);
+            }, 1000);
 
             listen(soil, "soil", 10, 250);
             listen(touch, "touch", 5, 10);
@@ -181,7 +198,7 @@ const init = () => {
                     sendDistance(rssi, "ESP32TWO", screen);
                 }
                 )
-            }, 2000);
+            }, 1000);
 
             listen(soil, "soilTwo", 10, 250);
             listen(touch, "touchTwo", 5, 10);
