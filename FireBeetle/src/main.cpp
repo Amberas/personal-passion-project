@@ -43,13 +43,8 @@ unsigned long previousMillis = 0;
 const long interval = 4000;
 
 bool executed = false;
-
-/*void mouth()
-{
-  // MOUTH
-  tft.fillCircle(64, 80, 32, ST77XX_WHITE);
-  tft.fillCircle(64, 110, 42, ST77XX_BLACK);
-}*/
+bool slept = false;
+bool cali = false;
 
 void awake()
 {
@@ -57,6 +52,7 @@ void awake()
   unsigned long currentMillis = millis();
 
   //EYES
+  tft.setRotation(0);
   tft.fillCircle(43, 120, 8, ST77XX_WHITE);
   tft.fillCircle(85, 120, 8, ST77XX_WHITE);
 
@@ -76,34 +72,52 @@ void awake()
     tft.fillCircle(43, 120, 8, ST77XX_BLACK);
     tft.fillCircle(85, 120, 8, ST77XX_BLACK);
     delay(500);
-    //mouth();
   }
+}
+
+void calibrate()
+{
+  if (cali == false)
+  {
+    tft.fillScreen(ST77XX_BLACK);
+    cali = true;
+  }
+
+  tft.setRotation(2);
+  tft.setCursor(30, 30);
+  tft.setTextSize(2);
+  tft.println("Don't");
+  tft.setCursor(30, 70);
+  tft.println("touch");
+  tft.setCursor(50, 110);
+  tft.println("me");
 }
 
 void sleeping()
 {
-  tft.fillScreen(ST77XX_BLACK);
-  delay(1000);
+  if (slept == false)
+  {
+    tft.fillScreen(ST77XX_BLACK);
+    slept = true;
+  }
+
   //ZZZ
   tft.setCursor(70, 40);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(3);
   tft.println("Z");
-  delay(1000);
 
   tft.println();
   tft.setCursor(60, 80);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(3);
   tft.println("Z");
-  delay(1000);
 
   tft.println();
   tft.setCursor(50, 120);
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(3);
   tft.println("Z");
-  delay(1000);
 }
 
 void setup()
@@ -170,10 +184,8 @@ void changedSensorTouch()
 {
   int touchstat = 0;
 
-  Serial.print(touchRead(15));
-
-      //get evarage of 100 readings to liminate noise
-      for (int i = 0; i < 100; i++)
+  //get evarage of 100 readings to liminate noise
+  for (int i = 0; i < 100; i++)
   {                                        // used to get a hundred readings of the status of touch
     touchstat = touchstat + touchRead(15); // adding the hundred readings within the for loop
   }
@@ -185,17 +197,16 @@ void changedSensorTouch()
 
 void loop()
 {
-  //soil
-  changedSensor();
-
   //touch
   changedSensorTouch();
 
   //getting data from node
   std::string rxValue = screenCharacteristic->getValue();
+  Serial.print(rxValue.length());
 
   //DEBUGGING
-  /*for (int i = 0; i < rxValue.length(); i++){
+  /*for (int i = 0; i < rxValue.length(); i++)
+  {
     Serial.print("rValue[");
     Serial.print(i);
     Serial.print("] = '");
@@ -207,15 +218,25 @@ void loop()
   {
     sleeping();
     executed = false;
+    cali = false;
   }
   else if (rxValue[0] == '1')
   {
-    //DISPLAY
     awake();
+    cali = false;
+    slept = false;
   }
+  else if (rxValue[0] == '2')
+  {
+    calibrate();
+    executed = false;
+    slept = false;
+  }
+
   else
   {
     sleeping();
     executed = false;
+    cali = false;
   }
 }
