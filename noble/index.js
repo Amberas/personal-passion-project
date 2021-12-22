@@ -1,6 +1,7 @@
 const noble = require('noble');
 const { Client } = require("node-osc");
 const { KalmanFilter } = require('kalman-filter');
+const req = require('express/lib/request');
 
 const client = new Client('192.168.0.174', 8000);
 
@@ -27,6 +28,9 @@ const characteristicUUIDs = {
     ESP32TWO: [["a350e8ca-5e8e-11ec-bf63-0242ac130002"], ["a6b802d2-5e8e-11ec-bf63-0242ac130002"]]
 }
 
+let calibrate = false;
+let touchVar = 0;
+
 
 //function processing
 const map_range = (value, low1, high1, low2, high2) => {
@@ -34,42 +38,51 @@ const map_range = (value, low1, high1, low2, high2) => {
 }
 
 //listen for characteristic change
-const listen = (variable, name, valueLow, valueHigh) => {
+const listen = (variable, name, valueLow, valueHigh, screen) => {
     variable.on('data', async function (data, isNotification) {
 
         const number = data.readUInt8(0);
-       // console.log(`${name}:`, data.readUInt8(0));
+        console.log(`${name}:`, data.readUInt8(0));
 
         if (name !== "touch" && name !== "touchTwo" && name !== "soilTwo") {
             client.send(`/${name}`, map_range(number, valueLow, valueHigh, 0, 1));
         }
 
-        if (name == "soilTwo" && number >= 20 && number <= 100) {
+        if (name == "soilTwo" && number >= 20) {
             client.send(`/soilTwo`, 1);
         } else if (name == "soilTwo") {
             client.send(`/soilTwo`, 0);
         }
 
-
-
-        if (name == "touch" && number <= 29) {
-            //console.log("touch");
-            client.send(`/touch`, 1);
-        } else if (name == "touch") {
-            client.send(`/touch`, 0);
+        //calibrate first 5 sec
+        if (name == "touch" && calibrate == false) {
+            screen.write(Buffer.from('2'), true, function (error) {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log("written 2");
+                }
+            }.bind(this));
+            let startTime = new Date().getTime();
+            setInterval(function () {
+                if (new Date().getTime() - startTime > 5000) {
+                    calibrate = true;
+                    return;
+                }
+                touchVar = number;
+            }, 2000);
         }
 
 
-        if (name == "touchTwo" && number <= 24) {
-            //console.log("touch");
-            client.send(`/touchTwo`, 1);
-        } else if (name == "touchTwo") {
-            client.send(`/touchTwo`, 0);
+        if (calibrate == true) {
+            if (name == "touch" && number < touchVar) {
+                //console.log("touch");
+                client.send(`/touch`, 1);
+            } else if (name == "touch") {
+                client.send(`/touch`, 0);
+            }
         }
 
-        /*if (name == "up" || name == "down" || name == "left") {
-            client.send(`/${name}`, map_range(number, valueLow, valueHigh, 0, 1));
-        }*/
     });
 
     variable.subscribe(function (error) {
@@ -81,13 +94,9 @@ const listen = (variable, name, valueLow, valueHigh) => {
 const kalmanFilterFunc = (observations, newObservations) => {
     const kFilter = new KalmanFilter();
     const res = kFilter.filterAll(observations);
-    /*const sum = observations.reduce((a, b) => a + b, 0);
-    const avg = (sum / observations.length) || 0;*/
     for (let index = 0; index < res.length; index++) {
         newObservations.push(res[index][0])
     }
-    //const sumTwo = newObservations.reduce((a, b) => a + b, 0);
-    //const avgTwo = (sumTwo / newObservations.length) || 0;
     return newObservations[newObservations.length - 1]
 }
 
@@ -95,20 +104,11 @@ const kalmanFilterFunc = (observations, newObservations) => {
 const sendDistance = (rssi, name, char) => {
     console.log("send distance")
     if (rssi) {
-        if (name == "Arduino") {
-            observationsArduino.push(rssi);
-            const newRSSI = kalmanFilterFunc(observationsArduino, newObservationsArduino);
-            console.log("newRSSI Arduino:", newRSSI);
-            if (newRSSI <= -70) {
-                client.send(`/${name}`, 0);
-            } else {
-                client.send(`/${name}`, 1);
-            }
-        } else if (name == "ESP32") {
+        if (name == "ESP32") {
             observationsESP32.push(rssi);
             const newRSSI = kalmanFilterFunc(observationsESP32, newObservationsESP32);
             console.log("newRSSI ESP32:", newRSSI);
-            if (newRSSI <= -70) {
+            if (newRSSI <= -70 && calibrate == true) {
                 char.write(Buffer.from('0'), true, function (error) {
                     if (error) {
                         console.log(error);
@@ -119,7 +119,7 @@ const sendDistance = (rssi, name, char) => {
 
                 client.send(`/${name}`, 0);
                 client.send(`/touch`, 0);
-            } else {
+            } else if (calibrate == true) {
                 char.write(Buffer.from('1'), true, function (error) {
                     if (error) {
                         console.log(error);
@@ -127,8 +127,6 @@ const sendDistance = (rssi, name, char) => {
                         console.log("written 1");
                     }
                 }.bind(this));
-
-
                 client.send(`/${name}`, 1);
             }
 
@@ -145,9 +143,7 @@ const sendDistance = (rssi, name, char) => {
     }
 }
 
-
 const init = () => {
-
 
     noble.on('stateChange', (state) => {
         if (state === 'poweredOn') {
@@ -191,14 +187,6 @@ const init = () => {
             listen(down, "down", 10, 100);
             listen(right, "right", 10, 100);
             listen(left, "left", 10, 100);
-            setInterval(async function () {
-                peripheral.updateRssi(function () {
-                    const rssi = peripheral.rssi;
-                    sendDistance(rssi, "Arduino");
-                }
-                )
-            }, 1000);
-
         }
 
         if (localName == "ESP32") {
@@ -214,16 +202,13 @@ const init = () => {
                 }
                 )
             }, 1000);
-
-            //listen(soil, "soil", 10, 250);
-            listen(touch, "touch", 5, 10);
+            listen(touch, "touch", 5, 10, screen);
         }
 
         if (localName == "ESP32TWO") {
             await peripheral.connectAsync();
             const { characteristics } = await peripheral.discoverSomeServicesAndCharacteristicsAsync(serviceUUIDs.ESP32TWO, characteristicUUIDs.ESP32TWO.values());
             const soil = await characteristics[0];
-            //const touch = await characteristics[1];
             setInterval(function () {
                 peripheral.updateRssi(function () {
                     const rssi = peripheral.rssi;
@@ -233,7 +218,6 @@ const init = () => {
             }, 1000);
 
             listen(soil, "soilTwo", 10, 250);
-            //listen(touch, "touchTwo");
         }
 
     });

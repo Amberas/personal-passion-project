@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "FireBeetle",
+			"path": "../../arduino/FireBeetle"
+		}
+	],
+	"settings": {}
+}
