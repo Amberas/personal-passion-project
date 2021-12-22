@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-
 float p = 3.1415926;
 
 BLEServer *pServer = NULL;
@@ -22,16 +21,14 @@ uint8_t sensor_pinTouch = 15;
 
 #define SERVICE_UUID "0d3e9cec-9c0d-42d9-b752-93ca7cdbd31a"
 #define CHARACTERISTIC_UUID "a350e8ca-5e8e-11ec-bf63-0242ac130002"
-#define CHARACTERISTIC_UUID_TOUCH "a6b802d2-5e8e-11ec-bf63-0242ac130002"
 
 int last = 0;
-int lastTouch = 0;
 
-int soilstat = 0;
 
 void setup()
 {
   Serial.begin(9600);
+
   //TOUCH
   pinMode(15, INPUT);
 
@@ -85,29 +82,10 @@ void changedSensor()
   
 }
 
-//only send data when there is a change
-void changedSensorTouch()
-{
-  int touchstat = 0;
-
-  //get evarage of 100 readings to liminate noise
-  for (int i = 0; i < 100; i++)
-  {                                        // used to get a hundred readings of the status of touch
-    touchstat = touchstat + touchRead(15); // adding the hundred readings within the for loop
-  }
-  touchstat = touchstat / 100; // dividing by hundred to get average
-  touchCharacteristic->setValue(touchstat);
-  touchCharacteristic->notify();
-  delay(3);
-}
 
 void loop()
 {
   //soil
   changedSensor();
-
-  //touch
-  changedSensorTouch();
-
 
 }
