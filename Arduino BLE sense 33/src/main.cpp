@@ -20,15 +20,7 @@
 #include <Arduino.h>
 
 
-
-
-
-
-// For 1.44" and 1.8" TFT with ST7735 use:
-//Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
-
-float x,
-    y, z;
+float x, y, z;
 int degreesX = 0;
 int degreesY = 0;
 
